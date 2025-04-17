@@ -1,0 +1,19 @@
+version: '3'
+services:
+  api_service:
+    build: .
+    container_name: asante_api_service
+    ports:
+      - "50051:50051"
+    environment:
+      - DB_HOST=asante-postgres
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=ASANTe@cu
+    networks:
+      - asante_network
+
+networks:
+  asante_network:
+    external: true

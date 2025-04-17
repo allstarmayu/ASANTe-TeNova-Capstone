@@ -1,0 +1,70 @@
+syntax = "proto3";
+package app.protos;
+
+service CustomerService {
+  rpc GetCustomer (CustomerRequest) returns (Customer);
+  rpc ListCustomers (ListCustomersRequest) returns (ListCustomersResponse);
+  rpc CreateCustomer (CreateCustomerRequest) returns (Customer);
+  rpc UpdateCustomer (UpdateCustomerRequest) returns (Customer);
+  rpc DeleteCustomer (CustomerRequest) returns (DeleteResponse);
+}
+
+message CustomerRequest {
+  string user_id = 1;
+}
+
+message ListCustomersRequest {
+  int32 page_size = 1;
+  int32 page_number = 2;
+}
+
+message ListCustomersResponse {
+  repeated Customer customers = 1;
+  int32 total_count = 2;
+}
+
+message CreateCustomerRequest {
+  string name = 1;
+  string email = 2;
+  string phone_number = 3;
+  string city = 4;
+  string state = 5;
+  string zipcode = 6;
+  int32 age = 7;
+  string gender = 8;
+  string income_level = 9;
+  string interests = 10;
+}
+
+message UpdateCustomerRequest {
+  string user_id = 1;
+  string name = 2;
+  string email = 3;
+  string phone_number = 4;
+  string city = 5;
+  string state = 6;
+  string zipcode = 7;
+  int32 age = 8;
+  string gender = 9;
+  string income_level = 10;
+  string interests = 11;
+}
+
+message Customer {
+  string user_id = 1;
+  string name = 2;
+  string email = 3;
+  string phone_number = 4;
+  string city = 5;
+  string state = 6;
+  string zipcode = 7;
+  int32 age = 8;
+  string gender = 9;
+  string income_level = 10;
+  string interests = 11;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}

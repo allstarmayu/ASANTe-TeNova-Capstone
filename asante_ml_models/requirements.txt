@@ -1,0 +1,16 @@
+# gRPC & Postgres
+grpcio==1.46.3
+grpcio-tools==1.46.3
+grpcio-reflection==1.46.3
+psycopg2-binary==2.9.3
+
+# Data processing & core ML
+numpy==1.24.3
+pandas==1.5.3
+scipy==1.10.1
+scikit-learn==1.2.2
+joblib==1.2.0
+
+# Recommender‑specific libraries
+implicit==0.6.2
+lightfm==1.17
