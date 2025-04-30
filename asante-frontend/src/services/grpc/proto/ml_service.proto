@@ -1,0 +1,16 @@
+﻿syntax = "proto3";
+package ml_service;
+
+service MLService {
+  rpc GetRecommendations (RecommendationRequest) returns (RecommendationResponse);
+}
+
+message RecommendationRequest {
+  string user_id = 1;
+}
+
+message RecommendationResponse {
+  repeated string product_ids    = 1;
+  repeated string business_ids   = 2;
+  repeated string nonprofit_ids  = 3;
+}
