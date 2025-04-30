@@ -14,3 +14,6 @@ joblib==1.2.0
 # Recommender‑specific libraries
 implicit==0.6.2
 lightfm==1.17
+
+flask
+flask-cors

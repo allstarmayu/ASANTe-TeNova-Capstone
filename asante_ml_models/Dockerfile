@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY protos/ protos/
 COPY ml_service/ ml_service/
 
+
 # Compile protobuf definitions and fix imports
 RUN python -m grpc_tools.protoc \
       -I protos \

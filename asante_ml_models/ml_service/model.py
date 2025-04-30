@@ -59,9 +59,15 @@ class RecommendationModel:
                         return []
 
     def _load_data(self):
-        self.products = pd.read_sql("SELECT product_id, current_price_usd, rating, sales_volume FROM asante_products;", self.conn)
+        self.products = pd.read_sql("SELECT product_id, product_name, current_price_usd, rating, sales_volume FROM asante_products;", self.conn)
+        self.product_map = dict(zip(self.products.product_id, self.products.product_name)
+                                )
         self.businesses = pd.read_sql("SELECT * FROM asante_business;", self.conn)
-        self.nonprofits = pd.read_sql("SELECT ein, category AS cause, revenue_amt FROM asante_nonprofits;", self.conn)
+        self.business_map = dict(zip(self.businesses.business_id, self.businesses.business_name))
+
+        self.nonprofits = pd.read_sql("SELECT ein, name AS nonprofit_name, category AS cause, revenue_amt FROM asante_nonprofits;", self.conn)
+        self.nonprofit_map = dict(zip(self.nonprofits.ein.astype(str), self.nonprofits.nonprofit_name))
+
         self.transactions = pd.read_sql("SELECT * FROM asante_transactions;", self.conn)
         self.customers = pd.read_sql("SELECT * FROM asante_customers;", self.conn)
 
@@ -123,18 +129,18 @@ class RecommendationModel:
         if user_id in self.lfm_user_index:
             uidx = self.lfm_user_index.index(user_id)
             scores = self.lfm.predict(uidx, np.arange(len(self.lfm_product_index)))
-            top_idx = np.argsort(-scores)[:5]
+            top_idx = np.argsort(-scores)
             lfm_recs = [str(self.lfm_product_index[i]) for i in top_idx]
 
         # --- Viewed products boost ---
-        viewed_recs = [pid for pid in viewed_products if pid in self.products.product_id.values][:5]
+        viewed_recs = [pid for pid in viewed_products if pid in self.products.product_id.values]
         prod_ids = list(dict.fromkeys(cb_recs + lfm_recs + viewed_recs))
 
         # --- ALS business recommendations ---
         biz_recs = []
         if user_id in self.als_user_index:
             uidx = self.als_user_index.index(user_id)
-            biz_indices, _ = self.als.recommend(uidx, self.user_business_matrix[uidx], N=5)
+            biz_indices, _ = self.als.recommend(uidx, self.user_business_matrix[uidx], N=len(self.als_business_index))
             biz_recs = [str(self.als_business_index[i]) for i in biz_indices]
             # Replace print statements with logger
             logger.info("ALS Recommendations biz_indices: %s", biz_indices)
@@ -153,15 +159,19 @@ class RecommendationModel:
 
         # Combine and rank by revenue_amt
         all_matches = pd.concat([match_from_donations, match_from_prefs]).drop_duplicates(subset="ein")
-        np_recs = all_matches.sort_values('revenue_amt', ascending=False).ein.astype(str).head(5).tolist()
+        np_recs = all_matches.sort_values('revenue_amt', ascending=False).ein.astype(str).tolist()
 
         print("CAUSE PREFERENCES:", prefs)
         print("DONATED EINs:", donated_eins)
         print("MATCHED NONPROFITS:", all_matches[['ein', 'cause', 'revenue_amt']])
         print("RECOMMENDED NONPROFITS:", np_recs)
 
+        prod_ids = [self.product_map.get(pid, pid) for pid in prod_ids]
+        biz_recs = [self.business_map.get(bid, bid) for bid in biz_recs]
+        np_recs  = [self.nonprofit_map.get(ein, ein) for ein in np_recs]
+
         return {
-            "product_ids": prod_ids,
-            "business_ids": biz_recs,
-            "nonprofit_ids": np_recs or []
+            "product_ids":   prod_ids,
+            "business_ids":  biz_recs,
+            "nonprofit_ids": np_recs
         }

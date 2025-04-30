@@ -14,6 +14,17 @@ services:
       - DB_PASSWORD=ASANTe@cu
     networks:
       - asante_network
+  envoy:
+    image: envoyproxy/envoy:v1.15.0
+    container_name: envoy
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ml_service
+    networks:                 
+      - asante_network
 
 networks:
   asante_network:

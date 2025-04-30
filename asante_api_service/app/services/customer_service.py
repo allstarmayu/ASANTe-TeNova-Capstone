@@ -114,26 +114,44 @@ class CustomerServicer(customer_pb2_grpc.CustomerServiceServicer):
                 release_connection(conn)
     
     def CreateCustomer(self, request, context):
-        """Create a new customer"""
+        """Create a new customer and return its user_id."""
         conn = None
         try:
             conn = get_connection()
             cursor = conn.cursor()
-            
-            # Generate a new user_id (format: U##### where ##### is a sequential number)
-            cursor.execute("SELECT MAX(CAST(SUBSTRING(user_id, 2) AS INTEGER)) FROM asante_customers")
-            max_id = cursor.fetchone()[0]
-            new_id = f"U{max_id + 1:05d}" if max_id else "U00001"
-            
-            query = """
+
+            # 1) figure next numeric ID
+            cursor.execute(
+                "SELECT MAX(CAST(SUBSTRING(user_id,2) AS INTEGER)) FROM asante_customers"
+            )
+            max_id = cursor.fetchone()[0] or 0
+            new_id = f"U{max_id + 1:05d}"
+
+            # 2) insert
+            cursor.execute("""
                 INSERT INTO asante_customers (
-                    user_id, name, email, phone_number, city, state, zipcode, 
-                    age, gender, income_level, interests
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING user_id
-            """
-            
-            values = (
+                  user_id,
+                  name, email, phone_number,
+                  city, state, zipcode,
+                  age, gender,
+                  income_level, interests, cause_preferences,
+                  discount_sensitivity, signup_referral_source,
+                  browsing_behavior, transaction_history, nonprofits_donations_history,
+                  total_loyalty_rewards_received, membership_tier,
+                  business_engagement_score, location_based_purchase_pattern,
+                  cause_donation_alignment_score
+                ) VALUES (
+                  %s, %s, %s, %s,
+                  %s, %s, %s,
+                  %s, %s,
+                  %s, %s, %s,
+                  %s, %s,
+                  %s, %s, %s,
+                  %s, %s,
+                  %s, %s,
+                  %s
+                )
+            """, (
                 new_id,
                 request.name,
                 request.email,
@@ -144,22 +162,31 @@ class CustomerServicer(customer_pb2_grpc.CustomerServiceServicer):
                 request.age,
                 request.gender,
                 request.income_level,
-                request.interests
-            )
-            
-            cursor.execute(query, values)
-            user_id = cursor.fetchone()[0]
+                # if you want to store as JSON, convert to Python list; otherwise CSV:
+                list(request.interests),
+                list(request.cause_preferences),
+                request.discount_sensitivity,
+                request.signup_referral_source,
+                # brand new customer: empty JSON lists
+                [], [], [],
+                0,    # total_loyalty_rewards_received
+                "",   # membership_tier
+                0.0,  # business_engagement_score
+                "",   # location_based_purchase_pattern
+                0.0   # cause_donation_alignment_score
+            ))
             conn.commit()
-            
-            # Return the created customer
-            return self.GetCustomer(customer_pb2.CustomerRequest(user_id=user_id), context)
-            
+
+            # 3) return only the new ID
+            return customer_pb2.CreateCustomerResponse(user_id=new_id)
+
         except Exception as e:
             if conn:
                 conn.rollback()
             context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(f"Error creating customer: {str(e)}")
-            return customer_pb2.Customer()
+            context.set_details(f"Error creating customer: {e}")
+            return customer_pb2.CreateCustomerResponse()
+
         finally:
             if conn:
                 release_connection(conn)

@@ -1,4 +1,5 @@
 version: '3'
+
 services:
   api_service:
     build: .
@@ -11,6 +12,18 @@ services:
       - DB_NAME=postgres
       - DB_USER=postgres
       - DB_PASSWORD=ASANTe@cu
+    networks:
+      - asante_network
+
+  envoy_api:
+    image: envoyproxy/envoy:v1.15.0
+    container_name: envoy_api
+    volumes:
+      - ./envoy-api.yaml:/etc/envoy/envoy.yaml:ro
+    ports:
+      - "8081:8081"
+    depends_on:
+      - api_service
     networks:
       - asante_network
 

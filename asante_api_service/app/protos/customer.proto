@@ -4,7 +4,7 @@ package app.protos;
 service CustomerService {
   rpc GetCustomer (CustomerRequest) returns (Customer);
   rpc ListCustomers (ListCustomersRequest) returns (ListCustomersResponse);
-  rpc CreateCustomer (CreateCustomerRequest) returns (Customer);
+  rpc CreateCustomer (CreateCustomerRequest) returns (CreateCustomerResponse);
   rpc UpdateCustomer (UpdateCustomerRequest) returns (Customer);
   rpc DeleteCustomer (CustomerRequest) returns (DeleteResponse);
 }
@@ -33,7 +33,14 @@ message CreateCustomerRequest {
   int32 age = 7;
   string gender = 8;
   string income_level = 9;
-  string interests = 10;
+  repeated string interests = 10;
+  repeated string cause_preferences = 11;
+  string discount_sensitivity = 12;
+  string signup_referral_source = 13;
+}
+
+message CreateCustomerResponse {
+  string user_id = 1;
 }
 
 message UpdateCustomerRequest {
